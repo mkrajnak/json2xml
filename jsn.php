@@ -4,7 +4,7 @@
   $TESTINFILENAME = "/home/matt/Projects/ipp/json2xml/example.json";
   $TESTOUTFILENAME = "/home/matt/Projects/ipp/json2xml/example.xml";
 
-  define('XMLHEADER', '<?xml version="1.0" encoding="UTF-8" ?>\n'); //standard xml header
+  define('XMLHEADER', '<?xml version="1.0" encoding="UTF-8" ?>'); //standard xml header
   define('INPUTRGX', '/^(--input=.+)$/');
   define('OUTPUTRGX', '/^(--output=.+)$/');
   define('MATCHINFILENAME', '/^--input=(.+)$/');
@@ -12,24 +12,19 @@
 
 
   arg_check($argv,$argc);
-  // $json = json_read();
-  // print_r($json);
+  echo "$TESTINFILENAME\n";
+  echo "$TESTOUTFILENAME\n";
+  $json = json_read();
+  print_r($json);
 
+  write_json_to_xml($json);
 
   /**
   * Will parse and return filename from given string
   */
   function get_filename($filter,$string){
-    $file_name = preg_match($filter,$string,$matches);
+    preg_match($filter,$string,$matches);
     return $matches[1];
-  }
-
-  /**
-  * Will open a file, and writes converted json to file
-  */
-  function write_json_to_xml(){
-  $out_file = fopen(TESTOUTFILENAME, "w");
-  fwrite($out_file,TESTOUTFILENAME);
   }
 
   /**
@@ -46,13 +41,11 @@
       }
 
       if (preg_match(INPUTRGX, $value) === 1 ) {
-        $TESTINFILENAME = get_filename(MATCHINFILENAME,$value);
-        //echo "$TESTINFILENAME\n";
+        $GLOBALS['TESTINFILENAME'] = get_filename(MATCHINFILENAME,$value);
         continue;
       }
       if (preg_match(OUTPUTRGX, $value) === 1 ) {
-        $TESTOUTFILENAME = get_filename(MATCHOUTFILENAME,$value);
-        //echo "$TESTOUTFILENAME\n";
+        $GLOBALS['TESTOUTFILENAME'] = get_filename(MATCHOUTFILENAME,$value);
         continue;
       }
       $parse_error = true;
@@ -62,12 +55,59 @@
     }
   }
 
-
+  /**
+  * will read content of json file
+  * return json content in array
+  */
   function json_read(){
-    $raw_json = file_get_contents(TESTINFILENAME);
+    $raw_json = file_get_contents($GLOBALS['TESTINFILENAME']);
     $json = json_decode($raw_json,true);
     return $json;
   }
+
+  /**
+  * Will open a file, and writes converted json to file
+  */
+  function write_json_to_xml($json){
+    $out_file = fopen($GLOBALS['TESTOUTFILENAME'], "w");
+
+    $xml = new XMLWriter();
+    $xml->openMemory();
+    $xml->setIndentString("lel");
+    $xml->setIndent(1);
+    $xml->startDocument('1.0', 'UTF-8');
+
+    writeArray($json,$xml);
+
+    $xml->endDocument();
+    fwrite($out_file,$xml->outputMemory(TRUE));
+    fclose($out_file);
+  }
+
+  /**
+  * Function writes array
+  */
+  function writeArray($json,$xml)
+  {
+    foreach ($json as $key => $value) {
+      if (is_array($value)) {
+        if (is_int($key)) {
+          writeArray($value,$xml);
+        }
+        else{
+          $xml->startElement("$key");
+          writeArray($value,$xml);
+          $xml->endElement();
+        }
+      }
+      else{
+        $xml->startElement($key);
+        $xml->text("$value");
+        $xml->endElement();
+      }
+    }
+  }
+
 
   /**
   * Will write error message and exit script with proper exit code
