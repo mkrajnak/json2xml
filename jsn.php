@@ -3,6 +3,7 @@
 
   $TESTINFILENAME = "/home/matt/Projects/ipp/json2xml/example.json";
   $TESTOUTFILENAME = "/home/matt/Projects/ipp/json2xml/example.xml";
+  $GENERATEHEADER = true;
 
   define('XMLHEADER', '<?xml version="1.0" encoding="UTF-8" ?>'); //standard xml header
   define('INPUTRGX', '/^(--input=.+)$/');
@@ -14,10 +15,9 @@
   arg_check($argv,$argc);
   echo "$TESTINFILENAME\n";
   echo "$TESTOUTFILENAME\n";
-  $json = json_read();
-  print_r($json);
-
-  write_json_to_xml($json);
+  $json_data = json_read();
+  print_r($json_data);
+  write_json_to_xml($json_data);
 
   /**
   * Will parse and return filename from given string
@@ -40,6 +40,10 @@
         help();
       }
 
+      if ($value == "-n" ){
+          $GLOBALS['GENERATEHEADER'] = false;
+          continue;
+      }
       if (preg_match(INPUTRGX, $value) === 1 ) {
         $GLOBALS['TESTINFILENAME'] = get_filename(MATCHINFILENAME,$value);
         continue;
@@ -61,53 +65,76 @@
   */
   function json_read(){
     $raw_json = file_get_contents($GLOBALS['TESTINFILENAME']);
-    $json = json_decode($raw_json,true);
-    return $json;
+    $json_data = json_decode($raw_json,false);
+    return $json_data;
   }
 
   /**
   * Will open a file, and writes converted json to file
   */
-  function write_json_to_xml($json){
-    $out_file = fopen($GLOBALS['TESTOUTFILENAME'], "w");
+  function write_json_to_xml($json_data){
 
     $xml = new XMLWriter();
     $xml->openMemory();
-    $xml->setIndentString("lel");
-    $xml->setIndent(1);
-    $xml->startDocument('1.0', 'UTF-8');
+    $xml->setIndent(true);
+    if ($GLOBALS['GENERATEHEADER']) {
+      $xml->startDocument('1.0', 'UTF-8');
+    }
 
-    writeArray($json,$xml);
-
+    writeArray($json_data,$xml);
     $xml->endDocument();
-    fwrite($out_file,$xml->outputMemory(TRUE));
-    fclose($out_file);
-  }
+
+    print_r($xml->outputMemory(TRUE));
+  //   $out_file = fopen($GLOBALS['TESTOUTFILENAME'], "w");
+  //   fwrite($out_file,$xml->outputMemory(TRUE));
+  //   fclose($out_file);
+    }
 
   /**
-  * Function writes array
+  * Recursively writes arrays, object, in the end data
   */
-  function writeArray($json,$xml)
-  {
-    foreach ($json as $key => $value) {
-      if (is_array($value)) {
-        if (is_int($key)) {
+  function writeArray($json_data,$xml){
+
+    foreach ($json_data as $key => $value) {
+      if (is_object($value)) {
           writeArray($value,$xml);
+      }
+      else if (is_array($value)) {
+        $xml->startElement($key);       //<array>
+        $xml->startElement("array");    //<key>
+        writeArray($value,$xml);
+        $xml->endElement();             //</array>
+        $xml->endElement();             //<key>
         }
-        else{
-          $xml->startElement("$key");
-          writeArray($value,$xml);
-          $xml->endElement();
-        }
+      elseif (is_integer($key)){
+        $xml->startElement("item");       //<item>
+        $xml->startElement($key);         //<$key>
+        writeArray($value,$xml);
+        $xml->endElement();               //</key>
+        $xml->endElement();               //</item>
       }
       else{
         $xml->startElement($key);
-        $xml->text("$value");
+        write_value($value,$xml);
         $xml->endElement();
-      }
     }
   }
+}
+  /**
+  * Correctly writes data values to xml
+  */
+  function write_value($value,$xml){       //writing values
 
+    if (is_integer($value)) {
+      $xml->text("$value");
+    }
+    elseif (is_bool($value)) {
+      if($value)  $xml->text("true");
+      else        $xml->text("false");
+    }
+    else
+      $xml->text($value);
+  }
 
   /**
   * Will write error message and exit script with proper exit code
