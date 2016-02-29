@@ -3,17 +3,11 @@
 <lastName>Smith</lastName>
 <isAlive>1</isAlive>
 <age>25</age>
-<address>
-lel<streetAddress>21 2nd Street</streetAddress>
-lel<city>New York</city>
-lel<state>NY</state>
-lel<postalCode>10021-3100</postalCode>
-</address>
-<phoneNumbers>
-lel<type>home</type>
-lel<number>212 555-1234</number>
-lel<type>office</type>
-lel<number>646 555-4567</number>
-</phoneNumbers>
-<children/>
-<spouse></spouse>
+<address/>
+<array>
+ <phoneNumbers/>
+</array>
+<array>
+ <children/>
+ <spouse></spouse>
+</array>

@@ -81,7 +81,7 @@
       $xml->startDocument('1.0', 'UTF-8');
     }
 
-    writeArray($json_data,$xml);
+    writeXML($json_data,$xml);
     $xml->endDocument();
 
     print_r($xml->outputMemory(TRUE));
@@ -93,44 +93,61 @@
   /**
   * Recursively writes arrays, object, in the end data
   */
-  function writeArray($json_data,$xml){
+  function writeXML($json_data,$xml){
 
     foreach ($json_data as $key => $value) {
       if (is_object($value)) {
-          writeArray($value,$xml);
+        $xml->startElement($key);     //<key>
+        writeXML($value,$xml);
+        $xml->endElement();             //</key>
       }
       else if (is_array($value)) {
-        $xml->startElement($key);       //<array>
+        $xml->startElement("$key");     //<item>
         $xml->startElement("array");    //<key>
         writeArray($value,$xml);
         $xml->endElement();             //</array>
         $xml->endElement();             //<key>
         }
-      elseif (is_integer($key)){
-        $xml->startElement("item");       //<item>
-        $xml->startElement($key);         //<$key>
-        writeArray($value,$xml);
-        $xml->endElement();               //</key>
-        $xml->endElement();               //</item>
-      }
       else{
-        $xml->startElement($key);
+        $xml->startElement($key);       //wrap with <key>
         write_value($value,$xml);
-        $xml->endElement();
+        $xml->endElement();             //<key>
     }
   }
 }
+
+/**
+* Iterating through array
+*/
+function writeArray($field,$xml){
+  for ($i=0; $i < count($field); $i++) {
+    $xml->startElement("item");     //<item>
+    foreach ($field[$i] as $key => $value) {
+      $xml->startElement("$key");       //<$key>
+      write_value($value,$xml);
+      $xml->endElement();             //</key>
+    }
+    $xml->endElement();             //</item>
+  }
+}
+
+
+
   /**
   * Correctly writes data values to xml
   */
   function write_value($value,$xml){       //writing values
 
     if (is_integer($value)) {
-      $xml->text("$value");
+      $xml->writeAttribute("value",$value);
     }
     elseif (is_bool($value)) {
-      if($value)  $xml->text("true");
-      else        $xml->text("false");
+      if($value)  $xml->writeAttribute("value","true");
+      else        $xml->writeAttribute("value","false");
+    }
+    elseif (empty($value)) {
+      if(!is_array($value))
+        $xml->writeAttribute("value","NULL");
     }
     else
       $xml->text($value);
