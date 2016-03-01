@@ -10,6 +10,7 @@
   $INT_IS_ATTRIBUTE = true;
   $INDEX_ITEMS = false;
   $ARRAY_SIZE = false;
+  $VALUES_TO_ELEMENTS = false;      // -l
 
   $WRAPROOTTEXT = "root";
   $ARRAYTEXT = "array";
@@ -87,6 +88,10 @@
       }
       if ($value === "-i") {    //-i
         $GLOBALS['INT_IS_ATTRIBUTE'] = false;
+        continue;
+      }
+      if ($value === "-l") {    //-l
+        $GLOBALS['VALUES_TO_ELEMENTS'] = true;
         continue;
       }
       if ($value === "-t" || $value === "--index-items" ) {    //-i
@@ -204,12 +209,24 @@
       }
     }
     elseif (is_bool($value)) {
-      if($value)  $xml->writeAttribute("value","true");
-      else        $xml->writeAttribute("value","false");
+      if ($GLOBALS['VALUES_TO_ELEMENTS']) {
+        if($value)  $xml->startElement("true");
+        else        $xml->startElement("false");
+        $xml->endElement();
+      }
+      else {
+        if($value)  $xml->writeAttribute("value","true");
+        else        $xml->writeAttribute("value","false");
+      }
     }
     elseif (empty($value)) {
-      if(!is_array($value))
+      if(!is_array($value)){
+        if ($GLOBALS['VALUES_TO_ELEMENTS']) {
+          $xml->startElement("NULL");
+          $xml->endElement();
+        }
         $xml->writeAttribute("value","NULL");
+      }
     }
     else
       $xml->text($value);
