@@ -11,6 +11,7 @@
     var $array_size = false;
     var $values_to_elements = false;
     var $change_start_index = false;
+    var $write_to_file = false;
 
     var $index = 0;
     var $wrap_root_text = 'root';
@@ -18,8 +19,8 @@
     var $item_text = 'item';
 
     /*FILE VARIABLEs */
-    var $in_filename = "/home/matt/Projects/ipp/json2xml/example.json";
-    var $out_filename = "/home/matt/Projects/ipp/json2xml/example.xml";
+    var $in_filename = 'php://stdin';
+    var $out_filename = 'php://stdout';
 }
 
   /* REGEXES FOR PARSING AND MATCHING PARAMS */
@@ -78,12 +79,13 @@
           $opt->generate_header = false;
           continue;
       }
-      if (preg_match(INPUTRGX, $value) === 1 ) {
+      if (preg_match(INPUTRGX, $value) === 1 ) {        //--input=
         $opt->in_filename = get_filename(MATCHINFILENAME,$value);
         continue;
       }
-      if (preg_match(OUTPUTRGX, $value) === 1 ) {
+      if (preg_match(OUTPUTRGX, $value) === 1 ) {       //--output=
         $opt->out_filename = get_filename(MATCHOUTFILENAME,$value);
+        $opt->write_to_file = true;
         continue;
       }
       if (preg_match(ROOTRGX, $value) === 1 ) {
@@ -137,7 +139,10 @@
   * return json content in array
   */
   function json_read($opt){
-    $raw_json = file_get_contents($opt->in_filename);
+
+    if(($raw_json = file_get_contents($opt->in_filename)) === false){
+      err("Could not read file",2);
+    }
     $json_data = json_decode($raw_json,false);
     return $json_data;
   }
@@ -165,11 +170,18 @@
     }
     $xml->endDocument();
 
-    //print_r($xml->outputMemory(TRUE));
-    $out_file = fopen($opt->out_filename, "w");
-    fwrite($out_file,$xml->outputMemory(TRUE));
-    fclose($out_file);
+    if ($opt->write_to_file) {
+      if ($out_file = fopen($opt->out_filename, "w") === false) {
+        err("Could not open file",3);
+      }
+        if (fwrite($out_file,$xml->outputMemory(TRUE)) === false){
+          err("Could not write to file",3);
+        }
+        fclose($out_file);
+      }
+      else fwrite(STDOUT,$xml->outputMemory(TRUE));
     }
+
 
   /**
   * Recursively writes arrays, object, in the end data
@@ -267,7 +279,7 @@
   function check_start_index($opt){
     if ($opt->change_start_index) {
       if ($opt->index_items === false) {
-        err("ERR: use both --start and --index-items",1);
+        err("Invalid args, use both --start and --index-items",1);
       }
     }
   }
@@ -276,7 +288,7 @@
   * Will write error message and exit script with proper exit code
   */
   function err($message,$code){
-    fwrite(STDERR, "$message\n");
+    fwrite(STDERR, "ERR:"."$message\n");
     exit($code);
   }
 
