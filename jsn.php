@@ -276,7 +276,7 @@
   * Will write error message and exit script with proper exit code
   */
   function err($message,$code){
-    echo "$message\n";
+    fwrite(STDERR, "$message\n");
     exit($code);
   }
 
