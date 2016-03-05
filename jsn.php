@@ -12,11 +12,13 @@
     var $values_to_elements = false;
     var $change_start_index = false;
     var $write_to_file = false;
+    var $substitute_element = false;
 
     var $index = 0;
     var $wrap_root_text = 'root';
     var $array_text = 'array';
     var $item_text = 'item';
+    var $substitute_string = '-';
 
     /*FILE VARIABLEs */
     var $in_filename = 'php://stdin';
@@ -113,11 +115,15 @@
         $opt->values_to_elements = true;
         continue;
       }
-      if ($value === "-t" || $value === "--index-items" ) {    //-i
+      if ($value === "-t" || $value === "--index-items" ) {    //-t
         $opt->index_items = true;
         continue;
       }
-      if ($value === "-a" || $value === "--array-size" ) {    //-i
+      if ($value === "-a" || $value === "--array-size" ) {    //-a
+        $opt->array_size = true;
+        continue;
+      }
+      if ($value === "-h" ) {    //-h
         $opt->array_size = true;
         continue;
       }
