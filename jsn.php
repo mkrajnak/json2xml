@@ -56,7 +56,7 @@
 
     arg_check($argv,$argc,$opt);
     $json_data = json_read($opt);
-    print_r($json_data);                  //DELETE !!!!!!
+    //print_r($json_data);                  //DELETE !!!!!!
     write_json_to_xml($json_data,$opt);
 
     exit(0);
@@ -297,7 +297,7 @@
     elseif (empty($value)) {            // empty value
       if(!is_array($value)){
         if ($opt->values_to_elements) { //-l
-          $xml->startElement("NULL");
+          $xml->startElement("null");
           $xml->endElement();
         }
         $xml->writeAttribute("value","NULL");
