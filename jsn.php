@@ -13,6 +13,7 @@
     var $change_start_index = false;
     var $write_to_file = false;
     var $substitute_element = false;
+    var $substitute_value = false;
 
     var $index = 0;
     var $wrap_root_text = 'root';
@@ -124,7 +125,11 @@
         continue;
       }
       if ($value === "-h" ) {    //-h
-        $opt->array_size = true;
+        $opt->substitute_element = true;
+        continue;
+      }
+      if ($value === "-c" ) {    //-c
+        $opt->substitute_value = true;
         continue;
       }
       if (preg_match(STARTINDEXRGX, $value) === 1 ) {   //--start
@@ -278,6 +283,8 @@
     }
     else $xml->text($value);
   }
+
+  
 
   /**
   * CHECK IF --start AND --index-items was entered
