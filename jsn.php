@@ -56,7 +56,7 @@
 
     arg_check($argv,$argc,$opt);
     $json_data = json_read($opt);
-    //print_r($json_data);                  //DELETE !!!!!!
+    print_r($json_data);                  //DELETE !!!!!!
     write_json_to_xml($json_data,$opt);
 
     exit(0);
@@ -203,33 +203,33 @@
   */
   function writeXML($json_data,$xml,$opt){
 
+    if (is_array($json_data)) {
+      writeArray($json_data,$xml,$opt);
+      return;
+    }
     foreach ($json_data as $key => $value) {
 
       if ($opt->substitute_element) {
         $key = replace_invalid_keys($key,$opt);
       }
 
+      $xml->startElement($key);     //<key>
+
       if (is_object($value)) {
-        $xml->startElement($key);     //<key>
+
         writeXML($value,$xml,$opt);
-        $xml->endElement();             //</key>
       }
       else if (is_array($value)) {
-        $xml->startElement($key);     //<item>
-        $xml->startElement($opt->array_text);    //<key>
         if ($opt->array_size) {
           $xml->writeAttribute("size",count($value));
         }
         writeArray($value,$xml,$opt);
-        $xml->endElement();             //</array>
-        $xml->endElement();             //<key>
         }
       else{
         //echo "$key\n";
-        $xml->startElement($key);       //wrap with <key>
         write_value($value,$xml,$opt);
-        $xml->endElement();             //<key>
-    }
+        }
+      $xml->endElement();             //<key>
   }
 }
 
@@ -238,6 +238,7 @@
   */
   function writeArray($field,$xml,$opt){
 
+    $xml->startElement($opt->array_text);    //<key>
     for ($i = 0; $i < count($field); $i++) {
 
       check_start_index($opt);
@@ -258,6 +259,7 @@
       }
       $xml->endElement();             //</item>
     }
+    $xml->endElement();             //<key>
   }
 
   /**
