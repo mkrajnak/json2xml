@@ -290,7 +290,7 @@
         if ( $opt->string_is_attribute ) {    //-s
           $xml->writeAttribute("value",$value);
         }
-        $xml->writeRaw($value);
+        else $xml->writeRaw($value);
     }
     elseif (empty($value)) {            // empty value
       if(!is_array($value)){
