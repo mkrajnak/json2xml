@@ -206,7 +206,7 @@
     foreach ($json_data as $key => $value) {
 
       if ($opt->substitute_element) {
-        $key = check_invalid_chars($key,$opt);
+        $key = replace_invalid_keys($key,$opt);
       }
 
       if (is_object($value)) {
@@ -265,6 +265,10 @@
   */
   function write_value($value,$xml,$opt){       //writing values
 
+    if ($opt->substitute_value) {
+      $value = replace_invalid_values($value,$opt);
+    }
+
     if (is_integer($value) || is_numeric($value)) {        //values is integer
       if ($opt->int_is_attribute) {   //i
         $xml->writeAttribute("value",floor($value));
@@ -286,7 +290,7 @@
         if ( $opt->string_is_attribute ) {    //-s
           $xml->writeAttribute("value",$value);
         }
-        else $xml->text($value);
+        $xml->writeRaw($value);
     }
     elseif (empty($value)) {            // empty value
       if(!is_array($value)){
@@ -297,16 +301,29 @@
         $xml->writeAttribute("value","NULL");
       }
     }
-    else $xml->text($value);
   }
 
   /**
   * Handling -h, replaces invalid chars in keys
   */
-  function check_invalid_chars($key,$opt){
+  function replace_invalid_keys($key,$opt){
 
     if(is_string($key))
       return preg_replace(INVALIDCHARSRGX, $opt->substitute_string, $key);
+  }
+
+  /**
+  * Handling -c, replaces invalid chars in values
+  */
+  function replace_invalid_values($value,$opt){
+
+    if(is_string($value)){
+      $value = preg_replace("/&/", "&amp", $value);
+      $value = preg_replace("/</", "&lt", $value);
+      $value = preg_replace("/>/", "&gt", $value);
+
+      return $value;
+      }
   }
 
   /**
