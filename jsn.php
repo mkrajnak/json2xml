@@ -227,8 +227,9 @@
         $key = replace_invalid_keys($key,$opt);
       }
       if (check_element_validity($key,$opt)) {
-        err("Invalid element",50);
+        err("Invalid element",51);
       }
+
 
       $xml->startElement($key);     //<key>
 
