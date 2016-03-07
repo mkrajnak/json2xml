@@ -57,7 +57,7 @@
 
     arg_check($argv,$argc,$opt);
     $json_data = json_read($opt);
-    var_dump($json_data);                  //DELETE !!!!!!
+    //var_dump($json_data);                  //DELETE !!!!!!
     write_json_to_xml($json_data,$opt);
 
     exit(0);
@@ -130,7 +130,6 @@
         continue;
       }
       if (preg_match(REPLACEELEMENTRGX, $value) === 1 ) {  //--h
-        echo "DETECTED\n";
         $opt->substitute_element = true;
         $opt->substitute_string = get_filename(MATCHELEMENTREPLACEMENTTGX,$value);
         continue;
@@ -148,9 +147,13 @@
       break;
     }
     check_start_index($opt);
-    check_element_validity($opt->wrap_root_text,$opt);
-    check_element_validity($opt->array_text,$opt);
-    check_element_validity($opt->item_text,$opt);
+
+    if (check_element_validity($opt->wrap_root_text,$opt) ||
+        check_element_validity($opt->array_text,$opt) ||
+        check_element_validity($opt->item_text,$opt) ) {
+          err("Invalid element",50);
+    }
+
     if ($parse_error ) {
       err("Invalid parameters, try --help for more",1); // TODO: Check value again. should be 1
     }
@@ -214,16 +217,18 @@
   */
   function writeXML($json_data,$xml,$opt){
 
-    if (is_array($json_data)) {
-      writeArray($json_data,$xml,$opt);
+    if (is_array($json_data)) {           //received data as array handle as array
+      writeArray($json_data,$xml,$opt);   // like this [1,2,3]
       return;
     }
-    foreach ($json_data as $key => $value) {
+    foreach ($json_data as $key => $value) {  //
 
       if ($opt->substitute_element) { //substitute element
         $key = replace_invalid_keys($key,$opt);
       }
-      check_element_validity($key,$opt);
+      if (check_element_validity($key,$opt)) {
+        err("Invalid element",50);
+      }
 
       $xml->startElement($key);     //<key>
 
@@ -233,7 +238,7 @@
       }
       else if (is_array($value)) {
         writeArray($value,$xml,$opt);
-        }
+      }
       else{
         //echo "$key\n";
         write_value($value,$xml,$opt);
@@ -265,7 +270,10 @@
           $xml->endElement();             //</key>
         }
       }
-      else {  //write [][][][] field
+      else if (is_array($field[$i])) {    //array inside array handle recursively
+        writeArray($field[$i],$xml,$opt);
+      }
+      else {                              //write [][][][] field
         write_value($field[$i],$xml,$opt);
       }
       $xml->endElement();                 //</item>
@@ -278,22 +286,24 @@
   */
   function write_value($value,$xml,$opt){       //writing values
 
-    if ($opt->substitute_value) {
+    if ($opt->substitute_value) {               //substituting invalid chars
       $value = replace_invalid_values($value,$opt);
     }
-    if (is_numeric($value)) {
-      if (is_string($value)) {
+    if (is_numeric($value)) {                 //value is number
+      if (is_string($value)) {                // value is STRING !!!
         if ( $opt->string_is_attribute ) {    //-c
-          $xml->writeAttribute("value",$value);
+          $xml->startAttribute("value");
+          $xml->writeRaw($value);
+          $xml->endAttribute();
         }
-        else $xml->writeRaw($value);
+        else $xml->writeRaw($value);          //$amp and so on
       }
-      elseif (is_integer($value)) {         //values are integers
-        if ($opt->int_is_attribute) {       //i
+      elseif (is_integer($value)) {           //values are integers
+        if ($opt->int_is_attribute) {         //-i
           $value = floor($value);
           $xml->writeAttribute("value",$value);
         }
-        else $xml->text("$value");
+        else $xml->text("$value");            //value written inside tags
       }
     }
 
@@ -303,14 +313,16 @@
         else        $xml->startElement("false");
         $xml->endElement();
       }
-      else {
+      else {                          //booleans written as attributes
         if($value)  $xml->writeAttribute("value","true");
         else        $xml->writeAttribute("value","false");
       }
     }
     elseif (is_string($value)) {      // string
         if ( $opt->string_is_attribute ) {    //-c
-          $xml->writeAttribute("value",$value);
+          $xml->startAttribute("value");
+          $xml->writeRaw($value);
+          $xml->endAttribute();
         }
         else $xml->writeRaw($value);
     }
@@ -320,7 +332,7 @@
           $xml->startElement("null");
           $xml->endElement();
         }
-        $xml->writeAttribute("value","NULL");
+        $xml->writeAttribute("value","null");
       }
     }
   }
@@ -345,10 +357,11 @@
     if (preg_match(STARTCHARRGX, $key) === 1 ) {
       preg_match(STARTCHARRGX,$key,$matches);
       if ($matches[0] ==  "_") {
-        return;
+        return false;
       }
-      err("Invalid element",50);
+      return true;
     }
+    return false;
   }
 
   /**
@@ -357,12 +370,11 @@
   function replace_invalid_values($value,$opt){
 
     if(is_string($value)){
-      $value = preg_replace("/&/", "&amp", $value);
-      $value = preg_replace("/</", "&lt", $value);
-      $value = preg_replace("/>/", "&gt", $value);
-
-      return $value;
+      $value = preg_replace("/&/", "&amp;", $value);
+      $value = preg_replace("/</", "&lt;", $value);
+      $value = preg_replace("/>/", "&gt;", $value);
       }
+    return $value;
   }
 
   /**
