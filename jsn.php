@@ -1,6 +1,8 @@
 #!/usr/bin/php
-<?php
+#
+#JSN:xkrajn02
 
+<?php
   class Options {
     /* ERROR CHECKING FLAGS*/
     var $generate_header = true;
@@ -314,8 +316,8 @@
         else $xml->writeRaw($value);          //$amp and so on
       }
       elseif (is_integer($value) || is_numeric($value)) {           //values are integers
+        $value = floor($value);
         if ($opt->int_is_attribute) {         //-i
-          $value = floor($value);
           $xml->writeAttribute("value",$value);
         }
         else $xml->text("$value");            //value written inside tags
@@ -369,11 +371,14 @@
   */
   function check_element_validity($key,$opt){
 
-    if (preg_match(STARTCHARRGX, $key) === 1 ) {
+    if (preg_match(STARTCHARRGX, $key) === 1 ) {  //check first character
       preg_match(STARTCHARRGX,$key,$matches);
       if ($matches[0] ==  "_") {
         return false;
       }
+      return true;
+    }
+    if (  preg_match(INVALIDCHARSRGX, $key) === 1) {  //check other chars validity
       return true;
     }
     return false;
