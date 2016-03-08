@@ -1,0 +1,5 @@
+test:
+  override:
+    zip "xkrajn02-JSN.zip" jsn.php
+    is_it_ok.sh
+    cd tests && test.php
