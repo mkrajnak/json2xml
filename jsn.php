@@ -146,7 +146,7 @@
       $parse_error = true;
       break;
     }
-    check_start_index($opt);
+    check_start_index($opt);  //check value entered after --start=
 
     if (check_element_validity($opt->wrap_root_text,$opt) ||
         check_element_validity($opt->array_text,$opt) ||
@@ -194,7 +194,7 @@
       $xml->startElement($opt->wrap_root_text);
     }
 
-    writeXML($json_data,$xml,$opt); //handle json
+    write_xml($json_data,$xml,$opt); //handle json
 
     if ($opt->wrap_root) {          //end root element
       $xml->endElement();
@@ -207,10 +207,10 @@
   /**
   * Recursively writes arrays, object, in the end data
   */
-  function writeXML($json_data,$xml,$opt){
+  function write_xml($json_data,$xml,$opt){
 
     if (is_array($json_data)) {           //received data as array handle as array
-      writeArray($json_data,$xml,$opt);   // like this [1,2,3]
+      write_array($json_data,$xml,$opt);   // like this [1,2,3]
       return;
     }
     foreach ($json_data as $key => $value) {  //
@@ -226,10 +226,10 @@
 
       if (is_object($value)) {
 
-        writeXML($value,$xml,$opt);
+        write_xml($value,$xml,$opt);
       }
       else if (is_array($value)) {
-        writeArray($value,$xml,$opt);
+        write_array($value,$xml,$opt);
       }
       else{
         write_value($value,$xml,$opt);
@@ -241,7 +241,7 @@
   /**
   * Iterating through array
   */
-  function writeArray($field,$xml,$opt){
+  function write_array($field,$xml,$opt){
 
     $xml->startElement($opt->array_text);   //<array>
     if ($opt->array_size) {                 //displaying array size
@@ -258,7 +258,7 @@
           write_object($field[$i],$xml,$opt);
       }
       else if (is_array($field[$i])) {    //array inside array handle recursively
-        writeArray($field[$i],$xml,$opt);
+        write_array($field[$i],$xml,$opt);
       }
       else {                              //write [][][][] field
         write_value($field[$i],$xml,$opt);
@@ -276,7 +276,7 @@
     foreach ($obj as $key => $value) {
 
       if (is_array($value)) {    //array inside array handle recursively
-        writeArray($value,$xml,$opt);
+        write_array($value,$xml,$opt);
       }
       else
       {
