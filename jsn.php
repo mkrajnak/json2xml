@@ -425,6 +425,17 @@
   */
   function help(){
     echo  "PHP Script for converting json to xml\n",
+          "usage: php jsn.php  [OPTIONS] \n",
+          "\t-r=root-element\t changes name of root element \n",
+          "\t-r=array-name\t changes name of array tag default=\"array\"\n",
+          "\t-r=array-name\t changes name of item tag default =\"item\"\n",
+          "\t-a, --array-size \t writes size of field as attribute of field tag\n",
+          "\t-t, --index-items \t each item of field is intexed\n",
+          "\t-start=n \t n is start number of indexing items\n",
+          "\t-s \t writes string as attributes instead if between tags\n",
+          "\t-i \t writes number as attributes instead if between tags\n",
+          "\t-l \t transforms boolean values to tags\n",
+          "\t-x \t tranformt & to &amp; etc.\n\n",
           "created by Martin Krajnak, xkrajn02@fit.vutbr.cz\n";
     exit(0);
   }
