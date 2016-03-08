@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # pouziti:   is_it_ok.sh xlogin01-XYZ.zip testdir
-#  
+#
 #   - POZOR: obsah adresare zadaneho druhym parametrem bude po dotazu VYMAZAN!
 #   - rozbali archiv studenta xlogin01-XYZ.zip do adresare testdir a overi formalni pozadavky pro odevzdani projektu IPP
 #   - nasledne vyzkousi spusteni
@@ -34,16 +34,16 @@ fi
 function unpack_archive () {
   local ext=`echo $1 | cut -d . -f 2,3`
   echo -n "Archive extraction: "
-  RETCODE=100  
+  RETCODE=100
 	if [[ "$ext" = "zip" ]]; then
 		unzip -o $1 >> $LOG 2>&1
     RETCODE=$?
 	elif [[ "$ext" = "tgz" ]]; then
 		tar xfz $1 >> $LOG 2>&1
-    RETCODE=$? 
+    RETCODE=$?
 	elif [[ "$ext" = "tbz" || "$ext" = "tbz2" ]]; then
 		tar xfj $1 >> $LOG 2>&1
-    RETCODE=$? 
+    RETCODE=$?
 	fi
   if [[ $RETCODE -eq 0 ]]; then
     echo "OK"
@@ -54,7 +54,7 @@ function unpack_archive () {
     echo "ERROR (code $RETCODE)"
     exit 1
   fi
-} 
+}
 
 # prevod jmen souboru obsahujicich nepovolene znaky
 #function to_small () {
@@ -62,9 +62,9 @@ function unpack_archive () {
 #	if [ "$N" != "$1" ]; then
 #	    mv "$1" "$N" 2>/dev/null
 #      echo "ERROR ($1 -> $N)"
-#      exit 1       
+#      exit 1
 #	fi
-#} 
+#}
 
 # flattening aktualniho adresare + to_small
 #function flattening () {
@@ -72,17 +72,17 @@ function unpack_archive () {
 #        local NFILE=""
 #	local FILES=`find . -name '*' -type f`
 #	for FILE in $FILES; do
-#            NFILE=./${FILE##*/}            
+#            NFILE=./${FILE##*/}
 #            if [ "$FILE" != "$NFILE" ]; then
 #              mv "$FILE" ${NFILE} 2>/dev/null
 #              echo "ERROR ($FILE -> $NFILE)"
-#              exit 1              
+#              exit 1
 #            fi
 #            F=`basename $FILE`
 #            if [ "$F" != "Makefile" ]; then
 #              to_small ${NFILE}
 #            fi
-#	done     
+#	done
 #  echo "OK"
 #}
 
@@ -98,8 +98,9 @@ function unpack_archive () {
 
 #   Priprava testdir
 if [[ -d $2 ]]; then
-  read -p "Do you want to delete $2 directory? (y/n)" RESP
-  if [[ $RESP = "y" ]]; then
+  #read -p "Do you want to delete $2 directory? (y/n)" RESP
+  RESP = "y"
+  if [[ 1 ]]; then
     rm -rf $2 2>/dev/null
   else
     echo "ERROR: User cancelled rewriting of existing directory."
@@ -135,10 +136,10 @@ fi
 #   Kontrola velikosti archivu
 echo -n "Checking size of $ARCHIVE: "
 ARCHIVE_SIZE=`du --bytes $ARCHIVE | cut -f 1`
-if [[ ${ARCHIVE_SIZE} -ge ${MAX_ARCHIVE_SIZE} ]]; then 
-  echo "Too big (${ARCHIVE_SIZE} bytes > ${MAX_ARCHIVE_SIZE} bytes)"; 
-else 
-  echo "OK"; 
+if [[ ${ARCHIVE_SIZE} -ge ${MAX_ARCHIVE_SIZE} ]]; then
+  echo "Too big (${ARCHIVE_SIZE} bytes > ${MAX_ARCHIVE_SIZE} bytes)";
+else
+  echo "OK";
 fi
 
 #   Extrakce ID ulohy ($TASK)
@@ -161,10 +162,10 @@ if [[ -f "$TASK-doc.pdf" ]]; then
   echo "OK"
 else
   echo "ERROR (not found)"
-fi  
+fi
 
 echo -n "Project execution test (--help): "
-#   Spusteni skriptu 
+#   Spusteni skriptu
 SCRIPT=`echo $TASK | tr [:upper:] [:lower:]`
 if [[ -f $SCRIPT.php ]]; then
    EXT="php" ## Pridano pro pozdeji
@@ -210,7 +211,7 @@ if [[ -f rozsireni ]]; then
   fi
 else
   echo "No"
-fi 
+fi
 
 #   Kontrola tretiho radku
 if [ -n $EXT ]; then
@@ -218,7 +219,7 @@ if [ -n $EXT ]; then
 		filename=`basename $file`
 		echo -n "Checking third line of the script ($filename): "
 		if [ -s $file ]; then
-			dos2unix $file >> $LOG 2>&1 
+			dos2unix $file >> $LOG 2>&1
 			LOGIN=`echo "$NAME" | sed 's/^\(x[a-z]\{5\}[0-9][0-9a-z]\).*$/\1/'`
 			THIRDLINE=`( read; read; read LINE; echo $LINE;) < $file`
 			RETCODE=`echo $THIRDLINE | sed -r "s/^#$TASK:$LOGIN$/OK/"`
