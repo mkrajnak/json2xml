@@ -1,8 +1,6 @@
 #!/usr/bin/php
-#
-#JSN:xkrajn02
-
 <?php
+//#JSN:xkrajn02
   class Options {
     /* ERROR CHECKING FLAGS*/
     var $generate_header = true;
