@@ -35,9 +35,9 @@
   define('ITEMRGX', '/^(--item-name=.+)$/');
   define('STARTINDEXRGX', '/^(--start=.+)$/');
   define('INVALIDCHARSRGX', '/<|>|"|\'|\/|\\|&|&/');  //ANY CHARACTER
-  define('STARTCHARRGX', '/^[\P{L}]/');             //FIRST CHARACTER
+  define('STARTCHARRGX', '/^[\P{L}]/');               //FIRST CHARACTER
 
-  define('MATCHINFILENAME', '/^--input=(.+)$/');
+  define('MATCHINFILENAME', '/^--input=(.+)$/');    //regexes parsing values entered after param
   define('MATCHOUTFILENAME', '/^--output=(.+)$/');
   define('MATCHROOTRGX', '/^-r=(.+)$/');
   define('MATCHARRAYRGX', '/^--array-name=(.+)$/');
@@ -45,7 +45,7 @@
   define('MATCHSTARTINDEXRGX', '/^--start=(.+)$/');
   define('MATCHELEMENTREPLACEMENTTGX', '/^-h=(.+)$/');
 
-  main($argv,$argc); //do the harlem shake
+  main($argv,$argc);                 //main function in which are handled all script functions
 
   /**
   * MAIN FUNCTION OF SCRIPT
@@ -57,7 +57,6 @@
 
     arg_check($argv,$argc,$opt);
     $json_data = json_read($opt);
-    //var_dump($json_data);                  //DELETE !!!!!!
     write_json_to_xml($json_data,$opt);
 
     exit(0);
@@ -78,7 +77,7 @@
     $parse_error = false;
     foreach ($argv  as $param_count => $value) {
 
-      if ($param_count == 0) continue; //TODO: handle stdin and
+      if ($param_count == 0) continue;
 
       if ($value == "--help" && $param_count === 1) {   //help was called, exiting with 0
         help();
@@ -129,16 +128,16 @@
         $opt->array_size = true;
         continue;
       }
-      if (preg_match(REPLACEELEMENTRGX, $value) === 1 ) {  //--h
+      if (preg_match(REPLACEELEMENTRGX, $value) === 1 ) {     //--h
         $opt->substitute_element = true;
         $opt->substitute_string = get_filename(MATCHELEMENTREPLACEMENTTGX,$value);
         continue;
       }
-      if ($value === "-c" ) {    //-c
+      if ($value === "-c" ) {                                //-c
         $opt->substitute_value = true;
         continue;
       }
-      if (preg_match(STARTINDEXRGX, $value) === 1 ) {   //--start
+      if (preg_match(STARTINDEXRGX, $value) === 1 ) {         //--start
         $opt->change_start_index = true;
         $opt->index = get_filename(MATCHSTARTINDEXRGX,$value);
         continue;
@@ -148,8 +147,8 @@
     }
     check_start_index($opt);  //check value entered after --start=
 
-    if (check_element_validity($opt->wrap_root_text,$opt) ||
-        check_element_validity($opt->array_text,$opt) ||
+    if (check_element_validity($opt->wrap_root_text,$opt) ||  //check validity of
+        check_element_validity($opt->array_text,$opt) ||      //entered param
         check_element_validity($opt->item_text,$opt) ) {
           err("Invalid element",50);
     }
@@ -209,20 +208,20 @@
   */
   function write_xml($json_data,$xml,$opt){
 
-    if (is_array($json_data)) {           //received data as array handle as array
-      write_array($json_data,$xml,$opt);   // like this [1,2,3]
+    if (is_array($json_data)) {             // received data as array handle as array
+      write_array($json_data,$xml,$opt);    // like this [1,2,3]
       return;
     }
-    foreach ($json_data as $key => $value) {  //
+    foreach ($json_data as $key => $value) {//  iterate through data
 
-      if ($opt->substitute_element) { //substitute element
+      if ($opt->substitute_element) {       //substitute element -c
         $key = replace_invalid_keys($key,$opt);
       }
       if (check_element_validity($key,$opt)) {
         err("Invalid element",51);
       }
 
-      $xml->startElement($key);     //<key>
+      $xml->startElement($key);           //<key>
 
       if (is_object($value)) {
 
@@ -234,7 +233,7 @@
       else{
         write_value($value,$xml,$opt);
         }
-      $xml->endElement();             //<key>
+      $xml->endElement();                  //<key>
   }
 }
 
@@ -275,7 +274,7 @@
 
     foreach ($obj as $key => $value) {
 
-      if (is_array($value)) {    //array inside array handle recursively
+      if (is_array($value)) {           //array inside array handle recursively
         write_array($value,$xml,$opt);
       }
       else
@@ -291,9 +290,9 @@
   /**
   * Correctly writes data values to xml
   */
-  function write_value($value,$xml,$opt){       //writing values
+  function write_value($value,$xml,$opt){     //writing values
 
-    if ($opt->substitute_value) {               //substituting invalid chars
+    if ($opt->substitute_value) {             //substituting invalid chars
       $value = replace_invalid_values($value,$opt);
     }
     if (is_numeric($value)) {                 //value is number
@@ -303,39 +302,39 @@
           $xml->writeRaw($value);
           $xml->endAttribute();
         }
-        else $xml->writeRaw($value);          //$amp and so on
+        else $xml->writeRaw($value);          //$amp and so on, also value is still string
       }
-      elseif (is_integer($value) || is_numeric($value)) {           //values are integers
+      elseif (is_integer($value) || is_numeric($value)) {       //values are integers
         $value = floor($value);
-        if ($opt->int_is_attribute) {         //-i
+        if ($opt->int_is_attribute) {                           //-i
           $xml->writeAttribute("value",$value);
         }
-        else $xml->text("$value");            //value written inside tags
+        else $xml->text("$value");           //value written inside tags
       }
     }
 
-    elseif (is_bool($value)) {        // values are boolean
-      if ($opt->values_to_elements) { // --l
+    elseif (is_bool($value)) {              // values are boolean
+      if ($opt->values_to_elements) {       // --l
         if($value)  $xml->startElement("true");
         else        $xml->startElement("false");
         $xml->endElement();
       }
-      else {                          //booleans written as attributes
+      else {                                //booleans written as attributes
         if($value)  $xml->writeAttribute("value","true");
         else        $xml->writeAttribute("value","false");
       }
     }
-    elseif (is_string($value)) {      // string
-        if ( $opt->string_is_attribute ) {    //-c
+    elseif (is_string($value)) {            // string
+        if ( $opt->string_is_attribute ) {  //-c
           $xml->startAttribute("value");
           $xml->writeRaw($value);
           $xml->endAttribute();
         }
         else $xml->writeRaw($value);
     }
-    elseif (empty($value)) {            // empty value
+    elseif (empty($value)) {                // empty value
       if(!is_array($value)){
-        if ($opt->values_to_elements) { //-l
+        if ($opt->values_to_elements) {     //-l
           $xml->startElement("null");
           $xml->endElement();
         }
@@ -361,7 +360,7 @@
   */
   function check_element_validity($key,$opt){
 
-    if (preg_match(STARTCHARRGX, $key) === 1 ) {  //check first character
+    if (preg_match(STARTCHARRGX, $key) === 1 ) {      //check first character
       preg_match(STARTCHARRGX,$key,$matches);
       if ($matches[0] ==  "_") {
         return false;
@@ -386,6 +385,7 @@
       }
     return $value;
   }
+
   /**
   * writes results to file
   */
@@ -405,6 +405,7 @@
     else fwrite(STDOUT,$xml->outputMemory(TRUE));
 
   }
+
   /**
   * CHECK IF --start AND --index-items was entered
   */
