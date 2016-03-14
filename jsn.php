@@ -15,7 +15,7 @@
     var $substitute_element = false;
     var $substitute_value = false;
 
-    var $index = 1;
+    var $index = 1;                 //default values
     var $wrap_root_text = 'root';
     var $array_text = 'array';
     var $item_text = 'item';
@@ -45,25 +45,24 @@
   define('MATCHSTARTINDEXRGX', '/^--start=(.+)$/');
   define('MATCHELEMENTREPLACEMENTTGX', '/^-h=(.+)$/');
 
-  main($argv,$argc);                 //main function in which are handled all script functions
+  main($argv,$argc);   //main function in which are handled all script functions
 
   /**
   * MAIN FUNCTION OF SCRIPT
   */
-
   function main($argv,$argc){
 
-    $opt = new Options();
+    $opt = new Options();     //initialize options
 
-    arg_check($argv,$argc,$opt);
-    $json_data = json_read($opt);
-    write_json_to_xml($json_data,$opt);
+    arg_check($argv,$argc,$opt);          //check args
+    $json_data = json_read($opt);         // read jsn
+    write_json_to_xml($json_data,$opt);   // write xml
 
-    exit(0);
+    exit(0);                  //sucess
   }
 
   /**
-  * Will parse and return filename from given string
+  * Will parse and return filename or parameter from given string
   */
   function get_filename($filter,$string){
     preg_match($filter,$string,$matches);
@@ -71,13 +70,14 @@
   }
 
   /**
-  * Check args passed to script, also calling functions handling all the functonality of script
+  * Check args passed to script, also calling functions handling all the
+  * functonality of script
   */
   function arg_check($argv,$argc,$opt){
     $parse_error = false;
     foreach ($argv  as $param_count => $value) {
 
-      if ($param_count == 0) continue;
+      if ($param_count == 0) continue; //TODO: handle stdin and
 
       if ($value == "--help" && $param_count === 1) {   //help was called, exiting with 0
         help();
@@ -133,7 +133,7 @@
         $opt->substitute_string = get_filename(MATCHELEMENTREPLACEMENTTGX,$value);
         continue;
       }
-      if ($value === "-c" ) {                                //-c
+      if ($value === "-c" ) {                                   //-c
         $opt->substitute_value = true;
         continue;
       }
@@ -142,19 +142,19 @@
         $opt->index = get_filename(MATCHSTARTINDEXRGX,$value);
         continue;
       }
-      $parse_error = true;
+      $parse_error = true;          //ending with error
       break;
     }
-    check_start_index($opt);  //check value entered after --start=
+    check_start_index($opt);        //check value entered after --start=
 
     if (check_element_validity($opt->wrap_root_text,$opt) ||  //check validity of
-        check_element_validity($opt->array_text,$opt) ||      //entered param
+        check_element_validity($opt->array_text,$opt) ||      //entered params
         check_element_validity($opt->item_text,$opt) ) {
           err("Invalid element",50);
     }
 
     if ($parse_error ) {
-      err("Invalid parameters, try --help for more",1); // TODO: Check value again. should be 1
+      err("Invalid parameters, try --help for more",1);       //ERR
     }
   }
 
@@ -220,10 +220,9 @@
       if (check_element_validity($key,$opt)) {
         err("Invalid element",51);
       }
-
       $xml->startElement($key);           //<key>
 
-      if (is_object($value)) {
+      if (is_object($value)){
 
         write_xml($value,$xml,$opt);
       }
@@ -232,7 +231,7 @@
       }
       else{
         write_value($value,$xml,$opt);
-        }
+      }
       $xml->endElement();                  //<key>
   }
 }
@@ -277,14 +276,12 @@
       if (is_array($value)) {           //array inside array handle recursively
         write_array($value,$xml,$opt);
       }
-      else
-      {
+      else{
         $xml->startElement("$key");     //<$key>
         write_value($value,$xml,$opt);
         $xml->endElement();             //</key>
       }
     }
-
   }
 
   /**
@@ -296,7 +293,9 @@
       $value = replace_invalid_values($value,$opt);
     }
     if (is_numeric($value)) {                 //value is number
+
       if (is_string($value)) {                // value is STRING !!!
+
         if ( $opt->string_is_attribute ) {    //-c
           $xml->startAttribute("value");
           $xml->writeRaw($value);
@@ -305,6 +304,7 @@
         else $xml->writeRaw($value);          //$amp and so on, also value is still string
       }
       elseif (is_integer($value) || is_numeric($value)) {       //values are integers
+
         $value = floor($value);
         if ($opt->int_is_attribute) {                           //-i
           $xml->writeAttribute("value",$value);
@@ -314,7 +314,9 @@
     }
 
     elseif (is_bool($value)) {              // values are boolean
+
       if ($opt->values_to_elements) {       // --l
+
         if($value)  $xml->startElement("true");
         else        $xml->startElement("false");
         $xml->endElement();
@@ -325,6 +327,7 @@
       }
     }
     elseif (is_string($value)) {            // string
+
         if ( $opt->string_is_attribute ) {  //-c
           $xml->startAttribute("value");
           $xml->writeRaw($value);
@@ -333,6 +336,7 @@
         else $xml->writeRaw($value);
     }
     elseif (empty($value)) {                // empty value
+
       if(!is_array($value)){
         if ($opt->values_to_elements) {     //-l
           $xml->startElement("null");
@@ -347,6 +351,7 @@
   * Handling -h, replaces invalid chars in keys
   */
   function replace_invalid_keys($key,$opt){
+
     if(is_string($key)){
       $key = preg_replace(INVALIDCHARSRGX, $opt->substitute_string, $key);
       $key = preg_replace(STARTCHARRGX, $opt->substitute_string, $key);
@@ -357,6 +362,7 @@
   /**
   * CHECK VALIDITY OF ELEMENT
   * XML tag can only start with valid unicode char or "_"
+  * @return tue when xml tag is invalid
   */
   function check_element_validity($key,$opt){
 
@@ -374,7 +380,7 @@
   }
 
   /**
-  * Handling -c, replaces invalid chars in values
+  * Handling -c, replaces invalid chars in values via regex
   */
   function replace_invalid_values($value,$opt){
 
@@ -391,7 +397,7 @@
   */
   function write_file($opt,$xml)
   {
-    if ($opt->write_to_file) {      //write to file or stdout
+    if ($opt->write_to_file) {                        //write to file
       if (($out_file = fopen($opt->out_filename, "w")) === false) {
         err("Could not open file $opt->out_filename",3);
       }
@@ -402,7 +408,7 @@
         err("Could not close the file",3);
       }
     }
-    else fwrite(STDOUT,$xml->outputMemory(TRUE));
+    else fwrite(STDOUT,$xml->outputMemory(TRUE));   //write to stdout
 
   }
 
