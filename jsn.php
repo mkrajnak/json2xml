@@ -388,6 +388,8 @@
       $value = preg_replace("/&/", "&amp;", $value);
       $value = preg_replace("/</", "&lt;", $value);
       $value = preg_replace("/>/", "&gt;", $value);
+      $value = preg_replace("/\"/", "&quot;", $value);
+      $value = preg_replace("/\'/", "&quot;", $value);
       }
     return $value;
   }
